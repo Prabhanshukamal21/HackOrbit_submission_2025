@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Driven Traffic Sign Recognition & Condition Classifier System</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #e9f0f4;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            background: #fff;
+            padding: 25px;
+            max-width: 650px;
+            margin: auto;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2d3e50;
+        }
+        button, input[type="submit"] {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover, input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+        .option-group {
+            margin-bottom: 20px;
+        }
+        .mode-section {
+            display: none;
+            margin-top: 10px;
+        }
+        video, img.preview {
+            max-width: 100%;
+            margin-top: 15px;
+            border-radius: 10px;
+            border: 2px solid #ccc;
+        }
+        .prediction {
+            font-size: 1.2em;
+            margin-top: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🚦 AI Driven Traffic Sign Recognition & Condition Classifier System 🚦</h1>
+
+    <!-- Option Selection -->
+    <div class="option-group">
+        <button onclick="selectMode('upload')">🖼 Upload Image</button>
+        <button onclick="selectMode('webcam')">📸 Use Webcam</button>
+    </div>
+
+    <!-- Upload Section -->
+    <div id="upload-section" class="mode-section">
+        <form method="POST" enctype="multipart/form-data">
+            <input type="file" name="image" accept="image/*" onchange="showUploadPreview(event)" required><br>
+            <input type="submit" value="Predict from Upload">
+        </form>
+        <img id="preview-upload" class="preview" style="display: none;" />
+    </div>
+
+    <!-- Webcam Section -->
+    <div id="webcam-section" class="mode-section">
+        <video id="video" autoplay playsinline></video><br>
+        <button onclick="captureImage()">📸 Capture & Predict</button>
+        <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+
+        <form id="capture-form" method="POST" action="/capture">
+            <input type="hidden" name="image_data" id="image_data">
+        </form>
+    </div>
+
+    {% if prediction %}
+        <div class="prediction">{{ prediction }}</div>
+        <img class="preview" src="{{ url_for('static', filename='uploads/' + image_filename) }}" alt="Prediction">
+    {% endif %}
+</div>
+
+<script>
+    function selectMode(mode) {
+        document.getElementById('upload-section').style.display = 'none';
+        document.getElementById('webcam-section').style.display = 'none';
+        if (mode === 'upload') {
+            document.getElementById('upload-section').style.display = 'block';
+        } else if (mode === 'webcam') {
+            document.getElementById('webcam-section').style.display = 'block';
+        }
+    }
+
+    function showUploadPreview(event) {
+        const reader = new FileReader();
+        reader.onload = function () {
+            const preview = document.getElementById('preview-upload');
+            preview.src = reader.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    }
+
+    // Webcam setup
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+    const imageDataInput = document.getElementById('image_data');
+    const form = document.getElementById('capture-form');
+
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            });
+    }
+
+    function captureImage() {
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataURL = canvas.toDataURL('image/jpeg');
+        imageDataInput.value = dataURL;
+        form.submit();
+    }
+</script>
+
+</body>
+</html>
